@@ -21,7 +21,7 @@ public class TaskArchiverImpl implements TaskArchiver {
     }
 
     @Override
-    public void archiveTask(User user, Task task) {
+    public void archiveTask(String category, User user, Task task) {
         if (user == null || task == null) {
             return;
         }
@@ -29,7 +29,7 @@ public class TaskArchiverImpl implements TaskArchiver {
         String contentBody =  user.getName() + " - " + task.getDescription() + " - " + task.getStatus();
 
         ArchiveRequestDto archiveRequest = new ArchiveRequestDto();
-        archiveRequest.setCategory("tasks-deleted");
+        archiveRequest.setCategory(category);
         archiveRequest.setId(String.valueOf(task.getId()));
         archiveRequest.setContent(contentBody);
 

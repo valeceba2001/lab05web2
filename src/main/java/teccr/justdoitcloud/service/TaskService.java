@@ -39,10 +39,18 @@ public class TaskService {
     public Task addTaskToUser(User user, Task task) {
         task.setUserId(user.getId());
         task.setCreatedAt(LocalDateTime.now());
-        return taskRepository.save(task);
+        Task taskCreated = taskRepository.save(task);
+
+        Optional<User> maybeUser = userRepository.findById(user.getId());
+        if (maybeUser.isPresent()) {
+            taskArchiver.archiveTask("tasks-new", maybeUser.get(), taskCreated);
+        }
+
+        return taskCreated;
     }
 
     public Task autogenerateTaskForUser(User user) {
+        // Pendiente: archivar la tarea en categoria "tasks-new" despues de creada
 
         Task task = taskGenerator.generateTask();
         if (task == null) {
@@ -87,7 +95,7 @@ public class TaskService {
         Optional<User> maybeUser = userRepository.findById(task.getUserId());
         maybeUser.ifPresent(user -> {
             try {
-                taskArchiver.archiveTask(user, task);
+                taskArchiver.archiveTask("tasks-deleted", user, task);
             } catch (Exception ignored) {
                 log.error("Error archiving task with id {} for user id {}: {}", task.getId(), user.getId(), ignored.getMessage());
             }

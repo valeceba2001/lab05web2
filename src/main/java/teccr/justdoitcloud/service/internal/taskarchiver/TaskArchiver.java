@@ -14,5 +14,5 @@ public interface TaskArchiver {
      * @param user usuario asociado a la tarea
      * @param task tarea a archivar
      */
-    void archiveTask(User user, Task task);
+    void archiveTask(String category, User user, Task task);
 }
