@@ -104,4 +104,61 @@ public class TaskService {
         taskRepository.deleteById(id);
     }
 
+    // -----------------------------------------------------------------------
+    // Métodos con validación de propiedad (Laboratorio 5)
+    // -----------------------------------------------------------------------
+
+    /**
+     * Devuelve la tarea solo si pertenece al usuario indicado.
+     * Si no existe o no pertenece al usuario → Optional vacío (→ 404 en el controlador).
+     */
+    public Optional<Task> getTaskByIdForUser(Long userId, Long taskId) {
+        Optional<Task> taskOpt = getTaskById(taskId);
+        if (taskOpt.isPresent() && taskOpt.get().getUserId().equals(userId)) {
+            return taskOpt;
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Actualiza la tarea solo si pertenece al usuario indicado.
+     * Si no pertenece al usuario → Optional vacío (→ 403 en el controlador).
+     */
+    public Optional<Task> updateTaskFieldsForUser(Long userId, Long taskId, Task updatedTask) {
+        Optional<Task> taskOpt = taskRepository.findById(taskId);
+        if (taskOpt.isEmpty() || !taskOpt.get().getUserId().equals(userId)) {
+            return Optional.empty();
+        }
+        Task existingTask = taskOpt.get();
+        if (updatedTask.getDescription() != null && !updatedTask.getDescription().trim().isEmpty()) {
+            existingTask.setDescription(updatedTask.getDescription().trim());
+        }
+        if (updatedTask.getStatus() != null) {
+            existingTask.setStatus(updatedTask.getStatus());
+        }
+        return Optional.of(taskRepository.save(existingTask));
+    }
+
+    /**
+     * Borra la tarea solo si pertenece al usuario indicado.
+     * Devuelve true si se borró, false si no pertenece al usuario (→ 403 en el controlador).
+     */
+    public boolean deleteTaskByIdForUser(Long userId, Long taskId) {
+        Optional<Task> taskOpt = taskRepository.findById(taskId);
+        if (taskOpt.isEmpty() || !taskOpt.get().getUserId().equals(userId)) {
+            return false;
+        }
+        Task task = taskOpt.get();
+        Optional<User> maybeUser = userRepository.findById(task.getUserId());
+        maybeUser.ifPresent(user -> {
+            try {
+                taskArchiver.archiveTask("tasks-deleted", user, task);
+            } catch (Exception ignored) {
+                log.error("Error archiving task with id {} for user id {}: {}", task.getId(), user.getId(), ignored.getMessage());
+            }
+        });
+        taskRepository.deleteById(taskId);
+        return true;
+    }
+
 }

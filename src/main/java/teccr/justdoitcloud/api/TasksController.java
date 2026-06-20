@@ -49,19 +49,27 @@ public class TasksController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Task> getTaskById(@PathVariable Long id) {
-        Optional<Task> taskOpt = taskService.getTaskById(id);
-        return taskOpt.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<Task> getTaskById(@PathVariable Long userId, @PathVariable Long id) {
+        Optional<Task> taskOpt = taskService.getTaskByIdForUser(userId, id);
+        return taskOpt.map(ResponseEntity::ok)
+                      .orElseGet(() -> ResponseEntity.notFound().build()); // 404 si no pertenece al usuario
     }
 
     @PatchMapping("/{id}")
-    public Task updateTask(@PathVariable Long id, @RequestBody Task task) {
-        return taskService.updateTaskFields(id, task);
+    public ResponseEntity<Task> updateTask(@PathVariable Long userId,
+                                           @PathVariable Long id,
+                                           @RequestBody Task task) {
+        Optional<Task> updated = taskService.updateTaskFieldsForUser(userId, id, task);
+        return updated.map(ResponseEntity::ok)
+                      .orElseGet(() -> ResponseEntity.status(HttpStatus.FORBIDDEN).build()); // 403 si no pertenece al usuario
     }
 
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteTask(@PathVariable Long id) {
-        taskService.deleteTaskById(id);
+    public ResponseEntity<Void> deleteTask(@PathVariable Long userId, @PathVariable Long id) {
+        boolean deleted = taskService.deleteTaskByIdForUser(userId, id);
+        if (!deleted) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build(); // 403 si no pertenece al usuario
+        }
+        return ResponseEntity.noContent().build(); // 204 si se borró correctamente
     }
 }
