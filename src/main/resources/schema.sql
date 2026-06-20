@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255),
     type VARCHAR(20),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY uq_users_username (user_name)
+    CONSTRAINT uq_users_username UNIQUE (user_name)
 );
 
 CREATE TABLE IF NOT EXISTS tasks (
@@ -16,7 +16,5 @@ CREATE TABLE IF NOT EXISTS tasks (
     status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_tasks_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE KEY uq_tasks_per_user_description (user_id, description(100))
+    CONSTRAINT uq_tasks_per_user_description UNIQUE (user_id, description)
 );
-
-
